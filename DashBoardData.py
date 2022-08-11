@@ -31,7 +31,12 @@ seifa_data = pl.read_parquet('./data/SEIFA Postcode Data.parquet').to_pandas()
 seifa_data.set_index(INDEX_COLUMN, inplace=True)
 seifa_data.dropna(inplace=True)
 
-modelling_df_nonprocessed = seifa_data
+additional_attribute_data = pl.read_parquet('./data/finpoint attributes.parquet').to_pandas()
+additional_attribute_data.drop(columns='MODE(STATE)', inplace=True)
+additional_attribute_data.set_index('POSTCODE', inplace=True)
+
+
+modelling_df_nonprocessed = seifa_data.join(additional_attribute_data)
 modelling_df = StandardScaler().fit_transform(modelling_df_nonprocessed)
 
 modelling_df = pd.DataFrame(
