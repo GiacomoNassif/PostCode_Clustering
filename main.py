@@ -23,7 +23,7 @@ with tab3:
 
 
 selected_postcode = st.sidebar.selectbox('Choose a Postcode to find neighbours of', modelling_df.index)
-radius = st.sidebar.number_input('Radius', min_value=0, value=100)
+radius = st.sidebar.slider('Radius', min_value=0, max_value=50_000, value=1000, step=50)
 
 selected_geospace = postcode_geodata.loc[selected_postcode, 'geometry']
 selected_geospace = selected_geospace.buffer(radius)
