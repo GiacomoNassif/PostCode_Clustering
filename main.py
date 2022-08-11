@@ -30,7 +30,7 @@ selected_geospace = selected_geospace.buffer(radius)
 
 
 overlapping_geometries = postcode_geodata.index[postcode_geodata.within(selected_geospace)]
-
+overlapping_geometries = overlapping_geometries.union(postcode_geodata.index[postcode_geodata.overlaps(selected_geospace)])
 
 filtered_geodata = postcode_geodata.loc[overlapping_geometries, :]
 filtered_attributes = modelling_df.loc[modelling_df.index.intersection(filtered_geodata.index), :]
