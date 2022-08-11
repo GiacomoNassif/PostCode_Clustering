@@ -28,7 +28,7 @@ postcode_geodata.to_crs('EPSG:3112', inplace=True)
 # post_code_mapping = pl.scan_csv('./data/australian_postcodes.csv').collect().to_pandas()
 
 seifa_data = pl.read_parquet('./data/SEIFA Postcode Data.parquet').to_pandas()
-seifa_data.set_iex(INDEX_COLUMN, inplace=True)
+seifa_data.set_index(INDEX_COLUMN, inplace=True)
 seifa_data.dropna(inplace=True)
 
 modelling_df_nonprocessed = seifa_data
