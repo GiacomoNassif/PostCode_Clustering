@@ -11,7 +11,7 @@ st.title('Nearest Neighbour Analysis')
 chosen_neighbours = st.sidebar.slider(
     label='Choose the number of neighbours to find: ',
     min_value=1,
-    max_value=10,
+    max_value=20,
     value=3,
     step=1,
 )
@@ -19,23 +19,33 @@ chosen_neighbours = st.sidebar.slider(
 tab1, tab2, tab3 = st.tabs(['Map', 'Neighbour Data', 'Hyper parameters'])
 
 with tab3:
-    distance_contribution = st.slider(
-        label='Distance Contribution to loss',
-        min_value=0.0,
-        max_value=1.0,
-        value=0.2,
-        step=0.01
-    )
+    pass
+
 
 selected_postcode = st.sidebar.selectbox('Choose a Postcode to find neighbours of', modelling_df.index)
+radius = st.sidebar.number_input('Radius', min_value=0, value=100)
 
-distances, nearest_neighbours = get_nearest_neighbours(selected_postcode, chosen_neighbours, distance_contribution)
+selected_geospace = postcode_geodata.loc[selected_postcode, 'geometry']
+selected_geospace = selected_geospace.buffer(radius)
+
+
+overlapping_geometries = postcode_geodata.index[postcode_geodata.within(selected_geospace)]
+
+
+filtered_geodata = postcode_geodata.loc[overlapping_geometries, :]
+filtered_attributes = modelling_df.loc[modelling_df.index.intersection(filtered_geodata.index), :]
+
+if chosen_neighbours > len(filtered_attributes):
+    st.warning(f'There is not enough nearby postcodes (only {len(filtered_attributes) - 1}) for your requested number of neighbours {chosen_neighbours}')
+    chosen_neighbours = len(filtered_attributes) - 1
+
+distances, nearest_neighbours = get_nearest_neighbours(filtered_attributes, selected_postcode, chosen_neighbours)
 distances = np.round(distances, 2)
+
 
 nearest_neighbour_attributes = modelling_df_nonprocessed.loc[nearest_neighbours, :]
 nearest_neighbour_attributes.insert(0, 'Rank', np.arange(chosen_neighbours + 1))
 nearest_neighbour_attributes.insert(1, 'Distance', distances)
-
 
 chosen_start = st.sidebar.selectbox('Goto this neighbour: ', nearest_neighbour_attributes.index)
 
@@ -45,20 +55,26 @@ if nearest_neighbours[0] != selected_postcode:
 geo_data: gpd.GeoDataFrame = postcode_geodata.loc[nearest_neighbours, :]
 geo_data = geo_data.join(nearest_neighbour_attributes)
 
-chosen_centroid = geo_data.centroid.loc[chosen_start]
+chosen_centroid = geo_data.loc[[chosen_start], 'geometry'].to_crs('EPSG:4283').centroid
 lat, long = chosen_centroid.x, chosen_centroid.y
 
 m = folium.Map(location=[long, lat], zoom_start=12)
 
-geo_data.explore(
-    column=distances,
-    m=m,
-    cmap='cividis',
-    tooltip=['Rank', 'Distance', 'Postcode'],
-)
 with tab1:
-    st_data = st_folium(m, height=700, width=700)
+    geo_data.explore(
+        column=distances,
+        m=m,
+        cmap='cividis',
+        tooltip=['Rank', 'Distance', 'Postcode'],
+    )
 
+    gdf = postcode_geodata.loc[[selected_postcode], :]
+    gdf['geometry'] = gdf.buffer(radius)
+    x1, y1, x2, y2 = gdf['geometry'].total_bounds
+
+    folium.GeoJson(gdf['geometry'].boundary).add_to(m)
+
+    st_data = st_folium(m, height=700, width=700)
 
 with tab2:
     st.write(nearest_neighbour_attributes)
