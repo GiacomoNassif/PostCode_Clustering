@@ -6,7 +6,7 @@ from DashBoardData import modelling_df, modelling_df_nonprocessed
 import numpy as np
 from models.ClusteringModel import get_dynamic_neighbours
 import geopandas as gpd
-from streamlit_folium import st_folium
+from streamlit_folium import folium_static
 import folium
 from DataEDA import load_geodata
 from StreamlitGraphics import plot_title
@@ -135,7 +135,7 @@ with tab1:
 
     m = generate_map(radius, multiplicative_factor, selected_postcode, required_exposure)
 
-    st_data = st_folium(m, height=700, width=700)
+    st_data = folium_static(m, height=700, width=700)
 
 with tab2:
     st.write(nearest_neighbour_attributes)
