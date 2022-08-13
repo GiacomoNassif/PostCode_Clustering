@@ -52,10 +52,17 @@ selected_postcode = mapping[selected_postcode_original]
 tab1, tab2, tab3 = st.tabs(['Map', 'Neighbour Data', 'Hyper parameters'])
 
 with tab3:
-    radius = st.slider('Starting Radius', min_value=1, max_value=50_000, value=1000, step=50)
-    multiplicative_factor = st.slider('Radius Multiplier', min_value=1., max_value=10., value=2., step=0.1)
+    radius = st.slider('Starting Radius', min_value=1, max_value=50_000, value=1000, step=50,
+                       help='This parameter represents the initial distance from the chosen suburb the algorithm uses '
+                            'when looking for nearest neighbours.')
+    multiplicative_factor = st.slider('Radius Multiplier', min_value=1., max_value=10., value=2., step=0.1,
+                                      help="""If the algorithm is unable to find enough exposure to satisfy the 
+                                      minimum exposure parameter, it will expand its search radius. The expansion is 
+                                      defined as 1 + Radius Multiplier.""")
 
-    required_exposure = st.slider('Minimum Exposure', min_value=0., max_value=50_000., step=10.)
+    required_exposure = st.slider('Minimum Exposure', min_value=0., max_value=50_000., step=10.,
+                                  help="""The algorithm will continue to expand its search radius until it is able to 
+                                  find more than this parameter (Minimum Exposure).""")
 
 
 @st.experimental_memo(max_entries=1)
