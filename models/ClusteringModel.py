@@ -21,8 +21,8 @@ def get_enough_exposure(
         current_geospace = current_geospace.buffer(starting_radius)
         used_geospaces.append(current_geospace)
 
-        overlapping_geometries = geo_data.index[geo_data.within(current_geospace)]
-        current_indexes = overlapping_geometries.union(geo_data.index[geo_data.overlaps(current_geospace)])
+        overlapping_geometries = geo_data.sindex.query(current_geospace, 'intersects')
+        current_indexes = geo_data.index[overlapping_geometries]
 
         filtered_exposure = exposure_data.loc[current_indexes]
 
