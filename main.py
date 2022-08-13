@@ -64,6 +64,10 @@ with tab3:
                                   help="""The algorithm will continue to expand its search radius until it is able to 
                                   find more than this parameter (Minimum Exposure).""")
 
+    show_trace = st.checkbox("Show Trace", value=False, help="""
+    Show the number of steps the algorithm took to get to the final radis. Otherwise, just plot the final search space.
+    """)
+
 
 @st.experimental_memo(max_entries=1)
 def get_neighbours(starting_radius: float, multiplying_factor: float, current_index, required_exposure):
@@ -95,7 +99,8 @@ def get_nearest_neighbour_attributes(radius, multiplicative_factor, selected_pos
     return nearest_neighbour_attributes, nearest_neighbour_attributes["Exposure"].sum()
 
 
-nearest_neighbour_attributes, current_exposure = get_nearest_neighbour_attributes(radius, multiplicative_factor, selected_postcode, required_exposure)
+nearest_neighbour_attributes, current_exposure = get_nearest_neighbour_attributes(radius, multiplicative_factor,
+                                                                                  selected_postcode, required_exposure)
 
 # chosen_start = st.sidebar.selectbox('Goto this neighbour: ', nearest_neighbour_attributes.index)
 chosen_start = selected_postcode
@@ -105,10 +110,11 @@ if nearest_neighbours[0] != selected_postcode:
     st.error("The nearest neighbour isn't itself???")
 
 with tab1:
-    def generate_map(radius, multiplicative_factor, selected_postcode, required_exposure):
+    def generate_map(radius, multiplicative_factor, selected_postcode, required_exposure, show_trace):
+        dictionary_key = (radius, multiplicative_factor, selected_postcode, required_exposure, show_trace)
 
-        if (radius, multiplicative_factor, selected_postcode, required_exposure) in st.session_state.map_cache:
-            return st.session_state.map_cache[(radius, multiplicative_factor, selected_postcode, required_exposure)]
+        if dictionary_key in st.session_state.map_cache:
+            return st.session_state.map_cache[dictionary_key]
 
         nearest_neighbours, distances, geometries_used = get_neighbours(radius, multiplicative_factor,
                                                                         selected_postcode,
@@ -128,19 +134,40 @@ with tab1:
             m=map_element,
             cmap='cividis',
             tooltip=['Rank', 'Distance', 'Suburb Name', 'Exposure'],
+            name='Dynamic Neighbour Layer'
         )
 
-        for geometry in geometries_used:
-            current_geometry = gpd.GeoDataFrame(index=[0], crs='EPSG:3112', geometry=[geometry])
-            folium.GeoJson(current_geometry.boundary).add_to(map_element)
+        if len(geometries_used) > 1:
+            trace_geometries = gpd.GeoDataFrame(crs='EPSG:3112', geometry=geometries_used[:-1])
+            trace_geometries['geometry'] = trace_geometries['geometry'].boundary
+            trace_geometries['Clustering Attempt'] = [f'#{i}' for i in range(1, len(geometries_used))]
+
+            trace_geometries.explore(
+                column=np.arange(0, len(geometries_used) - 1),
+                m=map_element,
+                name='Trace Search Space',
+                show=show_trace,
+                cmap='Reds',
+                vmin=0,
+                vmax=len(geometries_used),
+                legend=False,
+            )
+            # folium.GeoJson(trace_geometries.boundary, name='Trace Search Space', show=show_trace).add_to(map_element)
+
+        if geometries_used:
+            current_geometry = gpd.GeoDataFrame(index=[0], crs='EPSG:3112', geometry=[geometries_used[-1]])
+            current_geometry['geometry'] = current_geometry.boundary
+
+            folium.GeoJson(current_geometry, name='Final Search Space', tooltip='Final Search Space', style_function=lambda x: {'color': 'Red'}).add_to(map_element)
 
         st.session_state.map_cache = dict()
-        st.session_state.map_cache[(radius, multiplicative_factor, selected_postcode, required_exposure)] = map_element
+        st.session_state.map_cache[dictionary_key] = map_element
+        folium.LayerControl().add_to(map_element)
 
         return map_element
 
 
-    m = generate_map(radius, multiplicative_factor, selected_postcode, required_exposure)
+    m = generate_map(radius, multiplicative_factor, selected_postcode, required_exposure, show_trace)
 
     st_data = folium_static(m, height=700, width=700)
 
