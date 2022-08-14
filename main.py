@@ -211,8 +211,12 @@ if st.session_state['bulkquery']:
                                                                                            required_exposure)
 
         total_exposure = modelling_df_nonprocessed['Exposure'].loc[current_nearest_neighbours].sum()
+        current_nearest_neighbours = current_nearest_neighbours[1:]
+        current_nearest_neighbours_names = list(geodata.loc[current_nearest_neighbours, 'Suburb Name'])
+
         result_dict[current_postcode] = [
-            list(current_nearest_neighbours[1:]),
+            list(current_nearest_neighbours.astype(int)),
+            current_nearest_neighbours_names,
             len(current_distances[1:]),
             current_distances[1:],
             len(current_geometries),
@@ -226,9 +230,10 @@ if st.session_state['bulkquery']:
     result_data = pd.DataFrame.from_dict(
         result_dict,
         orient='index',
-        columns=['Dynamic Neighbours', 'Neighbours Used', 'Distances', 'Radii Used', 'Accumulated Exposure'],
+        columns=['Dynamic Neighbour Codes','Dynamic Neighbour Names', 'Neighbours Used', 'Distances', 'Radii Used', 'Accumulated Exposure'],
     )
     result_data.index.names = ['Suburb Code']
+    result_data.insert(0, 'Suburb Name', geodata['Suburb Name'])
 
     st.sidebar.download_button(
         'Download!',
