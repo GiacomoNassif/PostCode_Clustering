@@ -159,6 +159,10 @@ with tab1:
             current_geometry['geometry'] = current_geometry.boundary
 
             folium.GeoJson(current_geometry, name='Final Search Space', tooltip='Final Search Space', style_function=lambda x: {'color': 'Red'}).add_to(map_element)
+            bounding_box = current_geometry.to_crs('EPSG:4283').total_bounds
+            sw = list(bounding_box[:2][::-1])
+            nw = list(bounding_box[2:][::-1])
+            map_element.fit_bounds([sw, nw])
 
         st.session_state.map_cache = dict()
         st.session_state.map_cache[dictionary_key] = map_element
