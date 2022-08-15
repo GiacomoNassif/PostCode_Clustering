@@ -33,6 +33,11 @@ def set_page_container_style(
 
 
 def plot_title():
+    st.set_page_config(
+        page_title="RAC Dynamic Clustering",
+        page_icon=":car:"
+    )
+
     padding_top = 0
     padding_bottom = 10
     padding_left = 1
