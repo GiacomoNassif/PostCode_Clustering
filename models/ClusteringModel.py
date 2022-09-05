@@ -3,6 +3,7 @@ import geopandas as gpd
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
+MAX_ITERATIONS = 30
 
 def get_enough_exposure(
         starting_radius: float,
@@ -17,7 +18,12 @@ def get_enough_exposure(
     filtered_exposure = exposure_data.loc[current_indexes]
     used_geospaces = []
 
+    current_iterations = 0
     while filtered_exposure.sum() < required_exposure:
+
+        if current_iterations > MAX_ITERATIONS:
+            raise Exception('Too many iterations, any more will crash the app!')
+
         current_geospace = current_geospace.buffer(starting_radius)
         used_geospaces.append(current_geospace)
 
@@ -30,6 +36,7 @@ def get_enough_exposure(
             break
 
         starting_radius *= multiplying_factor
+        current_iterations += 1
 
     return current_indexes, used_geospaces
 
