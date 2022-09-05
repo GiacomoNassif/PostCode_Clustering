@@ -3,7 +3,7 @@ import geopandas as gpd
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
-MAX_ITERATIONS = 30
+MAX_ITERATIONS = 80
 
 def get_enough_exposure(
         starting_radius: float,
