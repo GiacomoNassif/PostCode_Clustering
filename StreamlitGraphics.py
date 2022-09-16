@@ -72,7 +72,7 @@ def plot_title():
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
     # st.image('./company logos/rac_logo.png', width=100)
-    st.title('wanted this')
+    st.title('RACI - Dynamic Clustering')
     st.markdown(
         """
         <div style = "position: relative; top:-25px">
